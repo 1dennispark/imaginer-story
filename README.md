@@ -8,7 +8,7 @@ StoryAI 프로젝트는 인공지능을 활용하여 소설을 자동으로 생�
 
 ## 설치 방법
 ```
-pip install https://github.com/paust-team/storyai/archive/refs/tags/storyai-0.1.0.py3-none-any.whl
+pip install https://github.com/paust-team/storyai/releases/download/v0.1.0/storyai-0.1.0-py3-none-any.whl
 ```
 
 ## 사용 방법
