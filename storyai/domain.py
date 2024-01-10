@@ -35,9 +35,9 @@ class Persona(Base):
     age: Mapped[int] = mapped_column(nullable=False)
     mbti: Mapped[str] = mapped_column(String(8), nullable=False)
     gender: Mapped[Gender] = mapped_column(nullable=False)
-    description: Mapped[str] = mapped_column(nullable=False)
+    description: Mapped[str] = mapped_column(TEXT, nullable=False)
 
-    context: Mapped[str]
+    context: Mapped[str] = mapped_column(TEXT, nullable=True)
 
 
 class Synopsis(Base):

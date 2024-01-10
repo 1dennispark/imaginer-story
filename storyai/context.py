@@ -1,55 +1,54 @@
+import functools
+from typing import Annotated
+
 import sqlalchemy
+from fastapi import Depends
 from sqlalchemy import orm
 
 from . import services, completion
 from .settings import Settings
 
 
-class Context:
-    def __init__(self):
-        self._synopsis = None
-        self._persona = None
-        self._settings = None
-        self._db = None
-        self._completer = None
-        self._services = None
-        self._session = None
+@functools.cache
+def settings() -> Settings:
+    return Settings()
 
-    def __enter__(self) -> 'Context':
-        return self
 
-    def __exit__(self, *args, **kwargs):
-        if self._session is not None:
-            self._session.close()
-            self._session = None
+@functools.cache
+def db_engine(settings: Annotated[Settings, Depends(settings)]):
+    engine = sqlalchemy.create_engine(settings.mysql_url)
+    try:
+        yield engine
+    finally:
+        engine.dispose()
 
-    @property
-    def settings(self) -> Settings:
-        if self._settings is None:
-            self._settings = Settings()
-        return self._settings
 
-    @property
-    def db(self):
-        if self._session is None:
-            engine = sqlalchemy.create_engine("sqlite:///" + self.settings.db_path)
-            self._session = orm.Session(engine)
-        return self._session
+def db_session(engine: Annotated[sqlalchemy.engine.Engine, Depends(db_engine)]):
+    session = orm.Session(engine)
+    try:
+        yield session
+    finally:
+        session.close()
 
-    @property
-    def completer(self):
-        if self._completer is None:
-            self._completer = completion.Completer(self.settings.openai_api_key, self.settings.completion_model)
-        return self._completer
 
-    @property
-    def persona(self) -> services.PersonaService:
-        if self._persona is None:
-            self._persona = services.PersonaService(self.db, self.completer)
-        return self._persona
+def completer(
+        settings: Annotated[Settings, Depends(settings)],
+) -> completion.Completer:
+    completer = completion.Completer(settings.openai_api_key, settings.completion_model)
+    return completer
 
-    @property
-    def synopsis(self) -> services.SynopsisService:
-        if self._synopsis is None:
-            self._synopsis = services.SynopsisService(self.db, self.completer)
-        return self._synopsis
+
+def persona_service(
+        db: Annotated[orm.Session, Depends(db_session)],
+        completer: Annotated[completion.Completer, Depends(completer)],
+) -> services.PersonaService:
+    persona_service = services.PersonaService(db, completer)
+    return persona_service
+
+
+def synopsis_service(
+        db: Annotated[orm.Session, Depends(db_session)],
+        completer: Annotated[completion.Completer, Depends(completer)],
+) -> services.SynopsisService:
+    synopsis = services.SynopsisService(db, completer)
+    return synopsis

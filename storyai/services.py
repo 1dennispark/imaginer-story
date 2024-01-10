@@ -2,7 +2,8 @@ import openai
 import sqlalchemy as sa
 import sqlalchemy.orm as orm
 
-from . import domain, completion
+from . import domain, completion, models
+from .models import AddCharacterInput, AddSynopsisInput, Character
 
 
 def _character_prompt(name: str, mbti: str, age: int, gender: domain.Gender, description: str) -> str:
@@ -33,13 +34,15 @@ class PersonaService:
 
     def add_character(
             self,
-            name: str,
-            age: int,
-            mbti: str,
-            gender: domain.Gender,
-            description: str,
-    ) -> domain.Persona:
-        prompt = _character_prompt(name, mbti, age, gender, description)
+            input: AddCharacterInput,
+    ) -> Character:
+        prompt = _character_prompt(
+            input.name,
+            input.mbti,
+            input.age,
+            input.gender,
+            input.description,
+        )
 
         context = self._completer.chat([{
             'role': 'user',
@@ -47,23 +50,29 @@ class PersonaService:
         }])
 
         persona = domain.Persona(
-            name=name,
-            mbti=mbti,
-            age=age,
-            gender=gender,
-            description=description,
+            name=input.name,
+            mbti=input.mbti,
+            age=input.age,
+            gender=input.gender,
+            description=input.description,
             context=context,
         )
         with self._db.begin():
             self._db.add(persona)
 
-        return persona
+        return Character.model_validate(persona)
 
-    def get_all_characters(self) -> list[domain.Persona]:
+    def get_all_characters(self) -> list[Character]:
         stmt = sa.select(domain.Persona)
         personas = list(self._db.execute(stmt).scalars().all())
 
-        return personas
+        return [Character.model_validate(persona) for persona in personas]
+
+    def get_character(self, persona_id: int) -> Character:
+        stmt = sa.select(domain.Persona).where(domain.Persona.id == persona_id).limit(1)
+        persona = self._db.execute(stmt).scalar_one()
+
+        return Character.model_validate(persona)
 
 
 class SynopsisService:
@@ -77,10 +86,9 @@ class SynopsisService:
 
     def add_synopsis(
             self,
-            theme: str,
-            persona_id: int,
-    ) -> domain.Synopsis:
-        persona = self._db.execute(sa.select(domain.Persona).where(domain.Persona.id == persona_id).limit(1)).scalar_one()
+            input: AddSynopsisInput,
+    ) -> models.Synopsis:
+        persona = self._db.execute(sa.select(domain.Persona).where(domain.Persona.id == input.character_id).limit(1)).scalar_one()
 
         content = self._completer.chat([{
             'role': 'user',
@@ -96,19 +104,19 @@ class SynopsisService:
             'content': persona.context,
         }, {
             'role': 'user',
-            'content': _persona_prompt(theme),
+            'content': _persona_prompt(input.theme),
         }])
 
         synopsis = domain.Synopsis(
-            theme=theme,
-            character_id=persona_id,
+            theme=input.theme,
+            character_id=input.character_id,
             content=content,
         )
 
         with self._db.begin(nested=True):
             self._db.add(synopsis)
 
-        return synopsis
+        return models.Synopsis.model_validate(synopsis)
 
     def get_all_synopses(self) -> list[domain.Synopsis]:
         stmt = sa.select(domain.Synopsis)
