@@ -1,7 +1,7 @@
 import enum
 from datetime import datetime
 
-from sqlalchemy import func, String, ForeignKey, TEXT
+from sqlalchemy import func, String, ForeignKey, TEXT, JSON, Column, Table
 from sqlalchemy.orm import Mapped, mapped_column, DeclarativeBase, relationship
 
 
@@ -32,12 +32,22 @@ class Persona(Base):
     updated_at: Mapped[datetime] = mapped_column(server_default=func.now(), onupdate=func.now())
 
     name: Mapped[str] = mapped_column(String(50), nullable=False)
-    age: Mapped[int] = mapped_column(nullable=False)
+    age: Mapped[str] = mapped_column(String(32), nullable=False)
     mbti: Mapped[str] = mapped_column(String(8), nullable=False)
     gender: Mapped[Gender] = mapped_column(nullable=False)
     description: Mapped[str] = mapped_column(TEXT, nullable=False)
 
+    profile_image: Mapped[str] = mapped_column(String(256), nullable=True)
+    original_images: Mapped[list[str]] = mapped_column(JSON, nullable=True)
     context: Mapped[str] = mapped_column(TEXT, nullable=True)
+
+
+synopses_characters = Table(
+    "synopses_characters",
+    Base.metadata,
+    Column("synopsis_id", ForeignKey("synopses.id"), primary_key=True),
+    Column("persona_id", ForeignKey("personas.id"), primary_key=True),
+)
 
 
 class Synopsis(Base):
@@ -47,8 +57,12 @@ class Synopsis(Base):
     created_at: Mapped[datetime] = mapped_column(server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(server_default=func.now(), onupdate=func.now())
 
-    theme: Mapped[str] = mapped_column(String(256), nullable=False)
-    character_id: Mapped[int] = mapped_column(ForeignKey("personas.id"), nullable=False)
-    character: Mapped[Persona] = relationship(foreign_keys=[character_id])
+    genre: Mapped[str] = mapped_column(String(32))
+    background: Mapped[str] = mapped_column(String(32))
+    ending: Mapped[str] = mapped_column(String(32))
+    event_description: Mapped[str] = mapped_column(TEXT)
 
-    content: Mapped[str] = mapped_column(TEXT, nullable=False)
+    characters: Mapped[list[Persona]] = relationship(secondary=synopses_characters)
+
+    contents: Mapped[list[str]] = mapped_column(JSON, nullable=True)
+    conversation: Mapped[str] = mapped_column(TEXT, nullable=True)

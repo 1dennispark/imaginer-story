@@ -12,13 +12,22 @@ router = APIRouter(prefix="/personas")
 logger = logging.getLogger(__name__)
 
 
-@router.post("")
-def create_persona(
+@router.post("", response_model=models.Character)
+def add_persona(
         input: models.AddCharacterInput,
         ps: Annotated[PersonaService, Depends(persona_service)],
-) -> None:
+):
     persona = ps.add_character(input)
     logger.info(f'added persona ID: {persona.id}, context: {persona.context}')
+    return persona
+
+
+@router.post(":generate", response_model=models.GenerateCharacterOutput)
+def generate_persona(
+        input: models.GenerateCharacterInput,
+        ps: Annotated[PersonaService, Depends(persona_service)],
+):
+    return ps.generate_character(input)
 
 
 @router.get("", response_model=list[models.Character])

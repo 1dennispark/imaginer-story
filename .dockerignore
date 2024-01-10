@@ -1,0 +1,8 @@
+website/node_modules
+website/build
+website/.cache
+website/src/index.css
+__pycache__
+.idea
+.env.*
+Dockerfile

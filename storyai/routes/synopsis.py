@@ -9,27 +9,17 @@ from ..context import synopsis_service
 router = APIRouter(prefix="/synopses")
 
 
-@router.post("", response_model=models.Synopsis)
-def add_synopsis(
-        input: models.AddSynopsisInput,
+@router.post("")
+def generate_synopsis(
+        input: models.GenerateSynopsisInput,
         ss: Annotated[SynopsisService, Depends(synopsis_service)],
 ):
-    synopsis = ss.add_synopsis(input)
-    return synopsis
+    return ss.generate_synopsis(input)
 
 
-@router.get("", response_model=list[models.Synopsis])
-def list_synopses(
+@router.post("/scenario")
+def generate_scenario(
+        input: models.GenerateScenarioInput,
         ss: Annotated[SynopsisService, Depends(synopsis_service)],
 ):
-    synopses = ss.get_all_synopses()
-    return synopses
-
-
-@router.get("/{synopsis_id}", response_model=models.Synopsis)
-def get_synopsis(
-        synopsis_id: int,
-        ss: Annotated[SynopsisService, Depends(synopsis_service)],
-):
-    synopsis = ss.get_synopsis(synopsis_id)
-    return synopsis
+    return ss.generate_scenario(input)

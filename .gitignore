@@ -1,9 +1,12 @@
 .idea
 *.iml
-DS_Store
+.DS_Store
 __pycache__
 .pytest_cache
 *.pyc
 *.pyo
 *.swp
 dist
+.env.*
+.env
+env.*
