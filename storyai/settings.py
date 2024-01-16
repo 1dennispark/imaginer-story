@@ -18,3 +18,6 @@ class Settings(BaseSettings):
 
     oci_bucket_name: str
     oci_bucket_namespace: str
+
+    paugen_dreambooth_controller_target: str
+    paugen_diffuser_target: str

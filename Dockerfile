@@ -22,5 +22,6 @@ COPY --from=builder /usr/local/lib/python3.11/site-packages /usr/local/lib/pytho
 COPY --from=builder --chown=1000:1000 /storyai/storyai /storyai/storyai
 COPY --from=builder --chown=1000:1000 /storyai/website/build /storyai/website/build
 COPY --from=builder --chown=1000:1000 /storyai/.env /storyai/.env
+COPY --from=builder --chown=1000:1000 /storyai/alembic.ini /storyai/alembic.ini
 
 ENTRYPOINT ["python3", "-m", "storyai"]

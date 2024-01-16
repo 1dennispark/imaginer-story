@@ -6,32 +6,20 @@ from pydantic import ConfigDict
 from . import domain
 
 
-class AddCharacterInput(pydantic.BaseModel):
-    name: str
-    age: str
-    gender: domain.Gender
-    mbti: str
-    description: str
-    original_images: list[str]
-    context: str | None = None
-    profile_image: str | None = None
-
-
 class Character(pydantic.BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     id: int
-    created_at: datetime
-    updated_at: datetime
 
     name: str
     age: str
     mbti: str
+    job: str
     gender: domain.Gender
     description: str
 
     context: str
-    profile_image: str
+    profile_image: str | None
     original_images: list[str]
 
 
@@ -74,15 +62,16 @@ class Synopsis(pydantic.BaseModel):
     conversation: str | None
 
 
-class GenerateCharacterInput(pydantic.BaseModel):
+class AddCharacterInput(pydantic.BaseModel):
     name: str
     age: str
     mbti: str
     gender: domain.Gender
     description: str
+    job: str
     original_images: list[str]
 
 
-class GenerateCharacterOutput(pydantic.BaseModel):
-    context: str
-    profile_image: str
+class ProfileImage(pydantic.BaseModel):
+    object_name: str | None
+    status: str

@@ -22,7 +22,10 @@ httpx = "^0.26.0"
 uvicorn = {extras = ["standard"], version = "^0.25.0"}
 oci = "^2.118.2"
 python-multipart = "^0.0.6"
-mysqlclient = "^2.2.1"
+grpcio-tools = "1.51.3"
+grpcio = "1.51.3"
+pymysql = "^1.1.0"
+alembic = "^1.13.1"
 
 [tool.poetry.scripts]
 storyai = 'storyai.cli:main'

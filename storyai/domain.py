@@ -36,10 +36,13 @@ class Persona(Base):
     mbti: Mapped[str] = mapped_column(String(8), nullable=False)
     gender: Mapped[Gender] = mapped_column(nullable=False)
     description: Mapped[str] = mapped_column(TEXT, nullable=False)
+    job: Mapped[str] = mapped_column(String(32), nullable=False)
 
     profile_image: Mapped[str] = mapped_column(String(256), nullable=True)
     original_images: Mapped[list[str]] = mapped_column(JSON, nullable=True)
     context: Mapped[str] = mapped_column(TEXT, nullable=True)
+
+    booth_id: Mapped[int] = mapped_column(nullable=True)
 
 
 synopses_characters = Table(
@@ -66,3 +69,13 @@ class Synopsis(Base):
 
     contents: Mapped[list[str]] = mapped_column(JSON, nullable=True)
     conversation: Mapped[str] = mapped_column(TEXT, nullable=True)
+
+
+class Prompt(Base):
+    __tablename__ = 'prompts'
+
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    job: Mapped[str] = mapped_column(TEXT)
+    male_prompt: Mapped[str] = mapped_column(TEXT)
+    female_prompt: Mapped[str] = mapped_column(TEXT)
+    negative_prompt: Mapped[str] = mapped_column(TEXT)

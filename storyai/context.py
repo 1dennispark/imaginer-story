@@ -1,4 +1,5 @@
 import functools
+import grpc
 import logging
 from typing import Annotated
 
@@ -8,7 +9,8 @@ from fastapi import Depends
 from oci.object_storage import ObjectStorageClient
 from sqlalchemy import orm
 
-from . import services, completion
+from . import completion, proto
+from .services import DreamBoothService, ImageStorageService, SynopsisService, PersonaService
 from .settings import Settings
 
 
@@ -34,19 +36,11 @@ def completer() -> completion.Completer:
     return completer
 
 
-def persona_service(
-        db: Annotated[orm.Session, Depends(db_session)],
-        completer: Annotated[completion.Completer, Depends(completer)],
-) -> services.PersonaService:
-    persona_service = services.PersonaService(db, completer)
-    return persona_service
-
-
 def synopsis_service(
         db: Annotated[orm.Session, Depends(db_session)],
         completer: Annotated[completion.Completer, Depends(completer)],
-) -> services.SynopsisService:
-    synopsis = services.SynopsisService(db, completer)
+) -> SynopsisService:
+    synopsis = SynopsisService(db, completer)
     return synopsis
 
 
@@ -69,8 +63,43 @@ def object_storage_client(
 def storage_service(
         client: Annotated[ObjectStorageClient, Depends(object_storage_client)],
 ):
-    return services.ImageStorageService(
+    return ImageStorageService(
         client,
         settings.oci_bucket_namespace,
         settings.oci_bucket_name,
+    )
+
+
+def dreambooth_controller():
+    with grpc.insecure_channel(settings.paugen_dreambooth_controller_target) as channel:
+        yield proto.DreamBoothControllerStub(channel)
+
+
+def diffuser():
+    with grpc.insecure_channel(settings.paugen_diffuser_target) as channel:
+        yield proto.DiffuserStub(channel)
+
+
+def dreambooth_service(
+        ctrl: Annotated[proto.DreamBoothControllerStub, Depends(dreambooth_controller)],
+        diffuser: Annotated[proto.DiffuserStub, Depends(diffuser)],
+        db: Annotated[orm.Session, Depends(db_session)],
+):
+    return DreamBoothService(
+        db=db,
+        settings=settings,
+        ctrl=ctrl,
+        diffuser=diffuser,
+    )
+
+
+def persona_service(
+        db: Annotated[orm.Session, Depends(db_session)],
+        completer: Annotated[completion.Completer, Depends(completer)],
+        dreambooth_service: Annotated[DreamBoothService, Depends(dreambooth_service)],
+        storage_service: Annotated[ImageStorageService, Depends(storage_service)],
+) -> PersonaService:
+    return PersonaService(
+        db, completer, dreambooth_service,
+        storage_service,
     )

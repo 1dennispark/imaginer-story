@@ -31,6 +31,17 @@ export const AGE_RANGE_ITEMS = [
     {label : '60대 이상', value: '60대 이상'},
 ];
 
+export const JOB_ITEMS = [
+    {label : '군인', value: '군인'},
+    {label : '마법사', value: '마법사'},
+    {label : '우주비행사', value: '우주비행사'},
+    {label : '소방관', value: '소방관'},
+    {label : '경찰', value: '경찰'},
+    {label : '게임 전사', value: '게임 전사'},
+    {label : '축구 선수', value: '축구 선수'},
+    {label : '배우', value: '배우'},
+];
+
 export const GENDER_ITEMS = [
     {label : '남자', value: '남자'},
     {label : '여자', value: '여자'},

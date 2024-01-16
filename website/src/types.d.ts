@@ -17,13 +17,19 @@ export type Character = {
   mbti: string,
   gender: string,
   age: string,
+  job: string,
   description: string,
   profile_image?: string,
-  original_images?: string[],
+  original_images: string[],
   context?: string,
 };
 
 export type GeneratedContext = {
   context: string,
   profile_image: string,
+};
+
+export type CharacterProfileImage = {
+  object_name: string,
+  status: string,
 };

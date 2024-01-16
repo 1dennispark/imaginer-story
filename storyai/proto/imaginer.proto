@@ -1,0 +1,195 @@
+syntax = "proto3";
+package imaginer;
+
+service Diffuser {
+  rpc Diffuse(DiffuseReq) returns (DiffuseResp) {}
+}
+
+message DiffuseReq {
+  string prompt = 1;
+  optional uint32 num_samples = 2;
+  optional string lang = 3;
+  optional string style = 4;
+  optional uint32 num_inference_steps = 5;
+  optional string negative_prompt = 6;
+  optional bool safety = 7;
+  optional uint64 dream_booth_id = 8;
+  optional string model_name = 9;
+  optional uint64 seed = 10;
+  optional double guidance_scale = 11;
+  optional double high_noise_frac = 12;
+  optional bool use_refiner = 13;
+}
+
+message DiffusionOutput {
+  bytes image = 1;
+  bool has_nsfw = 2;
+  double subject_fid = 3;
+  double text_fid = 4;
+  double neg_text_fid = 5;
+}
+
+message DiffuseResp {
+  repeated DiffusionOutput predictions = 1;
+  bool ok = 2;
+  uint64 seed = 3;
+}
+
+service DreamBoothController {
+  rpc CreateBooth(CreateBoothReq) returns (CreateBoothResp) {}
+  rpc UpdateBooth(UpdateBoothReq) returns (UpdateBoothResp) {}
+  rpc GetBooth(GetBoothReq) returns (GetBoothResp) {}
+
+  rpc TryBeginTraining(TryBeginTrainingReq) returns (TryBeginTrainingResp) {}
+  rpc EndTraining(EndTrainingReq) returns (EndTrainingResp) {}
+  rpc PreProcess(PreProcessReq) returns (PreProcessResp) {}
+}
+
+message UpdateBoothReq {
+  uint64 booth_id = 1;
+  bool succeeded = 2;
+  string model_uri = 3;
+  string training_data_uri = 4;
+  BoothError error = 5;
+}
+
+message UpdateBoothResp {
+}
+
+message PreProcessReq {
+  DreamBoothTuningParams params = 1;
+  repeated string instance_image_uris = 2;
+  string storage_password = 3;
+  string class_name = 4;
+}
+
+message PreProcessResp {
+  message Result {
+    bool ok = 1;
+    bytes processed_image = 2;
+    string error_reason = 3;
+    uint32 error_code = 4;
+  }
+  repeated Result results = 1;
+}
+
+message DreamBoothTuningParams {
+  message Padding {
+    uint32 left = 1;
+    uint32 top = 2;
+    uint32 right = 3;
+    uint32 bottom = 4;
+  }
+
+  enum ObjectAlignment {
+    CENTER = 0;
+    MID_BOTTOM = 1;
+  }
+
+  optional bool center_crop = 1;
+  optional bool resizing = 2;
+  optional uint32 max_train_steps = 3;
+  optional uint32 seed = 4;
+  optional bool remove_background = 5;
+  optional Padding padding = 6;
+  optional bool object_crop = 7;
+  optional ObjectAlignment object_align = 8;
+  optional double learning_rate = 9;
+}
+
+message CreateBoothReq {
+  enum BoothClass {
+    NONE = 0;
+    MAN = 1;
+    WOMAN = 2;
+    DOG = 3;
+    CAT = 4;
+  }
+  repeated string instance_image_uris = 1;
+  string instance_prompt = 2;
+  optional string base_model_name = 4;
+  optional DreamBoothTuningParams params = 5;
+  optional string class_prompt = 6;
+  optional BoothClass booth_class = 7;
+  string storage_password = 8;
+  string version = 9;
+}
+
+message CreateBoothResp {
+  uint64 booth_id = 1;
+}
+
+message TryBeginTrainingReq {
+  string version = 1;
+}
+
+message TryBeginTrainingResp {
+  uint64 booth_id = 1;
+  repeated string instance_image_uris = 2;
+  string instance_prompt = 3;
+  string base_model_name = 5;
+  DreamBoothTuningParams params = 6;
+  string class_name = 7;
+  string class_prompt = 8;
+  string ssec_key = 9;
+}
+
+message BoothError {
+  enum Code {
+    NONE = 0;
+    OBJECT_NOT_FOUND = 1;
+  }
+  string reason = 1;
+  Code code = 2;
+}
+
+message EndTrainingReq {
+  uint64 booth_id = 1;
+  bool succeeded = 2;
+  string model_uri = 3;
+  string training_data_uri = 4;
+  BoothError error = 5;
+}
+
+message EndTrainingResp {
+}
+
+enum BoothState {
+  READY = 0;
+  TRAINING = 1;
+  FINISHED = 2;
+  ERRORED = 3;
+}
+
+message GetBoothReq {
+  uint64 booth_id = 1;
+}
+
+message GetBoothResp {
+  BoothState state = 1;
+  string model_uri = 2;
+  DreamBoothTuningParams params = 3;
+  repeated string instance_image_uris = 4;
+  string ssec_key = 5;
+  BoothError error = 6;
+}
+
+//// Below messages are used for Kafka Value Serialization
+message TrainingReq {
+  uint64 booth_id = 1;
+  repeated string instance_image_uris = 2;
+  string instance_prompt = 3;
+  string base_model_name = 5;
+  DreamBoothTuningParams params = 6;
+  string class_name = 7;
+  string class_prompt = 8;
+  string ssec_key = 9;
+}
+
+message TrainingResp {
+  uint64 booth_id = 1;
+  bool succeeded = 2;
+  string model_uri = 3;
+  string training_data_uri = 4;
+  BoothError error = 5;
+}

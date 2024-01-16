@@ -17,17 +17,18 @@ def add_persona(
         input: models.AddCharacterInput,
         ps: Annotated[PersonaService, Depends(persona_service)],
 ):
-    persona = ps.add_character(input)
+    persona = ps.save_character(None, input)
     logger.info(f'added persona ID: {persona.id}, context: {persona.context}')
     return persona
 
 
-@router.post(":generate", response_model=models.GenerateCharacterOutput)
-def generate_persona(
-        input: models.GenerateCharacterInput,
+@router.put("/{id}", response_model=models.Character)
+def update_character(
+        id: int,
+        input: models.AddCharacterInput,
         ps: Annotated[PersonaService, Depends(persona_service)],
 ):
-    return ps.generate_character(input)
+    return ps.save_character(id, input)
 
 
 @router.get("", response_model=list[models.Character])
@@ -46,3 +47,10 @@ def get_persona(
     persona = ps.get_character(persona_id)
     return persona
 
+
+@router.get("/{persona_id}/profile-image", response_model=models.ProfileImage)
+def get_profile_image(
+        persona_id: int,
+        ps: Annotated[PersonaService, Depends(persona_service)],
+):
+    return ps.get_profile_image(persona_id)
