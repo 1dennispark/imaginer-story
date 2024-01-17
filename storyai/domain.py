@@ -38,11 +38,11 @@ class Persona(Base):
     description: Mapped[str] = mapped_column(TEXT, nullable=False)
     job: Mapped[str] = mapped_column(String(32), nullable=False)
 
-    profile_image: Mapped[str] = mapped_column(String(256), nullable=True)
-    original_images: Mapped[list[str]] = mapped_column(JSON, nullable=True)
-    context: Mapped[str] = mapped_column(TEXT, nullable=True)
+    profile_image: Mapped[str|None] = mapped_column(String(256), nullable=True)
+    original_images: Mapped[list[str]|None] = mapped_column(JSON, nullable=True)
+    context: Mapped[str|None] = mapped_column(TEXT, nullable=True)
 
-    booth_id: Mapped[int] = mapped_column(nullable=True)
+    booth_id: Mapped[int|None] = mapped_column(nullable=True)
 
 
 synopses_characters = Table(

@@ -17,6 +17,7 @@ import {ChangeEvent, useEffect, useRef, useState} from "react";
 import Layout from "../components/Layout";
 import * as apis from "../apis";
 import ProfileImage from "../components/ProfileImage";
+import _ from 'lodash';
 
 function CharacterMain() {
   const [notify, setNotify] = useState<NotificationProps>({type: "success", message: ""});
@@ -57,23 +58,11 @@ function CharacterMain() {
     getPresetData();
   }, []);
 
-  const handleSelectDropdown = (key: string, item: DropdownItem) => {
-    if (key == 'mbti') setCharacter({...character, mbti: item.value});
-    if (key == 'gender') setCharacter({...character, gender: item.value});
-    if (key == 'age_range') setCharacter({...character, age: item.value});
-    if (key == 'job') setCharacter({...character, job: item.value});
-  }
-
   const loadCharacter = async (id: number, apiLoading?: boolean) => {
     setApiLoading(apiLoading??true);
     try {
       const {data} = await apis.getCharacter(id);
       setCharacter(data);
-      if (data.profile_image === "loading") {
-        setTimeout(() => {
-          loadCharacter(id, false);
-        }, 5000);
-      }
     } catch (e) {
       console.error(e);
       setNotify({type: "error", message: "캐릭터 불러오기가 실패했습니다."});
@@ -89,16 +78,7 @@ function CharacterMain() {
     try {
       const {data} = character.id === 0 ? await apis.addCharacter(character) : await apis.updateCharacter(character);
       setCharacter(data);
-
-      if (presetList.length >= MAX_PRESET_LIST_LENGTH) {
-        setPresetList([data, ...presetList].slice(0, MAX_PRESET_LIST_LENGTH));
-      } else {
-        setPresetList([data, ...presetList]);
-      }
-
-      setTimeout(() => {
-        loadCharacter(data.id, false);
-      }, 5000);
+      setPresetList([data, ...presetList].slice(0, MAX_PRESET_LIST_LENGTH));
     } catch (e) {
       console.error(e);
       setNotify({type: "error", message: "캐릭터 프로필 생성에 실패했습니다."});
@@ -111,17 +91,18 @@ function CharacterMain() {
     if (!e.target.files) return;
     setApiLoading(true);
 
-    let newImages = [];
     try {
-      for (let i = 0; i < e.target.files.length; i++) {
-        const file = e.target.files[i];
-
+      const files = e.target.files;
+      const newImages = await Promise.all(_.range(0, e.target.files.length).map(async (i) => {
+        const file = files[i];
         const {data: {object_name}} = await apis.saveImage(file);
-        newImages.push(object_name);
-      }
+        return object_name;
+      }));
 
-      newImages = [...newImages, ...character.original_images].slice(0, MAX_IMAGE_LIST_LENGTH);
-      setCharacter({...character, original_images: newImages});
+      setCharacter({
+        ...character,
+        original_images: [...newImages, ...character.original_images].slice(0, MAX_IMAGE_LIST_LENGTH),
+      });
     } catch (e) {
       setNotify({type: "error", message: "사진 업로드에 실패했습니다."});
     } finally {
@@ -222,27 +203,27 @@ function CharacterMain() {
               </div>
               <div className="flex items-center">
                 <div className="w-[72px] text-base font-semibold shrink-0">직업</div>
-                <Dropdown items={JOB_ITEMS} placeholder="직업" selectedValue={character.job} onSelected={(item) => {
-                  handleSelectDropdown('job', item);
+                <Dropdown items={JOB_ITEMS} placeholder="직업" selectedValue={character.job} onSelected={({value}) => {
+                  setCharacter({...character, job: value});
                 }} disabled={apiLoading}/>
               </div>
               <div className="flex gap-x-[35px]">
                 <div className="flex items-center">
                   <div className="w-[72px] text-base font-semibold shrink-0">MBTI</div>
-                  <Dropdown items={MBTI_ITEMS} placeholder="MBTI" selectedValue={character.mbti} onSelected={(item) => {
-                    handleSelectDropdown('mbti', item);
+                  <Dropdown items={MBTI_ITEMS} placeholder="MBTI" selectedValue={character.mbti} onSelected={({value}) => {
+                    setCharacter({...character, mbti: value});
                   }} disabled={apiLoading}/>
                 </div>
                 <div className="flex items-center">
                   <div className="w-[72px] text-base font-semibold shrink-0">성별</div>
-                  <Dropdown items={GENDER_ITEMS} placeholder="성별" selectedValue={character.gender} onSelected={(item) => {
-                    handleSelectDropdown('gender', item);
+                  <Dropdown items={GENDER_ITEMS} placeholder="성별" selectedValue={character.gender} onSelected={({value}) => {
+                    setCharacter({...character, gender: value});
                   }} disabled={apiLoading}/>
                 </div>
                 <div className="flex items-center">
                   <div className="w-[72px] text-base font-semibold shrink-0">나이대</div>
-                  <Dropdown items={AGE_RANGE_ITEMS} placeholder="나이대" selectedValue={character.age} onSelected={(item) => {
-                    handleSelectDropdown('age_range', item);
+                  <Dropdown items={AGE_RANGE_ITEMS} placeholder="나이대" selectedValue={character.age} onSelected={({value}) => {
+                    setCharacter({...character, age: value});
                   }} disabled={apiLoading}/>
                 </div>
               </div>

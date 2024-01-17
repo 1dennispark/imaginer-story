@@ -97,9 +97,8 @@ class PersonaService:
         return character
 
     def get_profile_image(self, persona_id: int) -> models.ProfileImage:
-        with self._db.begin():
-            stmt = sa.select(domain.Persona).where(domain.Persona.id == persona_id).limit(1)
-            persona = self._db.execute(stmt).scalar_one()
+        with self._db.begin() as _:
+            persona = self._db.get(domain.Persona, persona_id, with_for_update=True)
             profile_image = persona.profile_image
             status = "ok"
             if profile_image is None:
@@ -109,7 +108,6 @@ class PersonaService:
                 elif state == proto.FINISHED:
                     profile_image = self._diffuse_profile_image(persona.booth_id, persona.job, persona.gender)
                     persona.profile_image = profile_image
-                    self._db.merge(persona)
                 elif state == proto.ERRORED:
                     logger.error(RuntimeError(f"errored: {err}"))
                     status = "errored"

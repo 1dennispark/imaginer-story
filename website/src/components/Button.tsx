@@ -27,7 +27,7 @@ export default function Button({label, onClick, loading, disabled} : Props) {
         >
           {!loading ?
             label :
-            <div className="flex items-center justify-center">
+            <div className="flex items-center justify-center px-0.5">
                 <LoadingCircle width="20" height="20" />
             </div>
           }

@@ -19,8 +19,8 @@ export type Character = {
   age: string,
   job: string,
   description: string,
-  profile_image?: string,
   original_images: string[],
+  profile_image?: string,
   context?: string,
 };
 
